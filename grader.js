@@ -47,18 +47,19 @@ var cheerioHtmlFile = function(htmlfile) {
 };
 
 var cheerioUrl = function(url) {
-    console.log(rest.get(url).on('complete', function(data) {
-    if (data instanceof Error) {
-     /* Handle error */
-    } else {
-      console.log("data:", data); //It prints xml if response is xml
-      restler.parsers.xml(data, function(err, newData) {
-      /* if it fails then assume that it is direct JSON, else newData is the JSON
-          formatted
-       */
-      });
-    }}));
-    /*return cheerio.load(rest.get(url));*/
+    var options = {
+	method: "get",
+	headers: {'Content-type': 'application/xml', 'Accept': 'application/xml'}
+    };
+
+    rest.get(url, options).
+    on('complete', function(data, response){
+	fs.writeFile(__dirname + '/file.txt', data, function(err) {
+	    if (err) throw err;
+	    console.log('It\'s saved!');
+	});
+    
+    });
 };
 
 var loadChecks = function(checksfile) {
@@ -66,17 +67,11 @@ var loadChecks = function(checksfile) {
 };
 
 var checkUrl = function(url, checksfile){
-    $ = cheerioUrl(url);
-    
-    var checks = loadChecks(checksfile).sort();
-    //console.log('cheerio='+$(checks[0]));
-    var out = {};
-    for(var ii in checks) {
-        var present = $(checks[ii]).length > 0;
-        out[checks[ii]] = present;
-    }
-    return out;
+    cheerioUrl(url);
+    checkHtmlFile(__dirname + '/file.txt', program.checks)
 };
+
+
 var checkHtmlFile = function(htmlfile, checksfile) {
     $ = cheerioHtmlFile(htmlfile);
     var checks = loadChecks(checksfile).sort();
